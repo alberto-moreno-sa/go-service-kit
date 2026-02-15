@@ -1,15 +1,27 @@
+version: "2"
 linters:
-  enable:
-    - errcheck
-    - govet
-    - staticcheck
-    - unused
-    - ineffassign
-    - gosimple
-
-linters-settings:
-  errcheck:
-    check-blank: true
-
-issues:
-  exclude-use-default: true
+  settings:
+    errcheck:
+      check-blank: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - errcheck
+        source: (\.Close\(\)|defer .*\.Close\(\))
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

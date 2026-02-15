@@ -45,7 +45,10 @@ func (c *Client) PublishEntry(ctx context.Context, entryID string, version int) 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("CMA publish failed (%d): could not read body: %w", resp.StatusCode, err)
+		}
 		return fmt.Errorf("CMA publish failed (%d): %s", resp.StatusCode, string(body))
 	}
 
