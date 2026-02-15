@@ -1,0 +1,49 @@
+name: Release Tag
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  tag:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag
+        id: latest
+        run: |
+          tag=$(git tag -l 'v*' --sort=-version:refname | head -n1)
+          echo "tag=${tag:-v0.0.0}" >> "$GITHUB_OUTPUT"
+
+      - name: Bump patch version
+        id: bump
+        run: |
+          current="${{ steps.latest.outputs.tag }}"
+          # Strip 'v' prefix
+          version="${current#v}"
+          IFS='.' read -r major minor patch <<< "$version"
+
+          # Check PR title prefix for bump type
+          title="${{ github.event.pull_request.title }}"
+          if [[ "$title" == feat!:* ]] || [[ "$title" == *"BREAKING"* ]]; then
+            major=$((major + 1)); minor=0; patch=0
+          elif [[ "$title" == feat:* ]] || [[ "$title" == feat\(*\):* ]]; then
+            minor=$((minor + 1)); patch=0
+          else
+            patch=$((patch + 1))
+          fi
+
+          new_tag="v${major}.${minor}.${patch}"
+          echo "new_tag=${new_tag}" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        run: |
+          git tag "${{ steps.bump.outputs.new_tag }}"
+          git push origin "${{ steps.bump.outputs.new_tag }}"
