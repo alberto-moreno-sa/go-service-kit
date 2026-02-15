@@ -31,7 +31,10 @@ func (c *Client) GetBuildLog(ctx context.Context) (*BuildLogResult, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("CMA build log query failed (%d): could not read body: %w", resp.StatusCode, err)
+		}
 		return nil, fmt.Errorf("CMA build log query failed (%d): %s", resp.StatusCode, string(body))
 	}
 
@@ -127,7 +130,10 @@ func (c *Client) UpdateBuildLog(ctx context.Context, result *BuildLogResult, ent
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		respBody, _ := io.ReadAll(resp.Body)
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return 0, fmt.Errorf("CMA build log update failed (%d): could not read body: %w", resp.StatusCode, err)
+		}
 		return 0, fmt.Errorf("CMA build log update failed (%d): %s", resp.StatusCode, string(respBody))
 	}
 
@@ -169,7 +175,10 @@ func (c *Client) CreateBuildLog(ctx context.Context, entries []BuildLogEntry) (s
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 201 {
-		respBody, _ := io.ReadAll(resp.Body)
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return "", 0, fmt.Errorf("CMA build log create failed (%d): could not read body: %w", resp.StatusCode, err)
+		}
 		return "", 0, fmt.Errorf("CMA build log create failed (%d): %s", resp.StatusCode, string(respBody))
 	}
 
